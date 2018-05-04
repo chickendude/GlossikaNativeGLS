@@ -1,6 +1,3 @@
-# Use pdftotext to convert text file
-# $ pdftotext [BOOKNAME].pdf -enc UTF-8 -raw -nopgbrk
-
 import glob, os
 
 import pdftotext
@@ -13,6 +10,7 @@ import pdftotext
 #
 
 ACCEPTED_PDFS = (
+	# ENGLISH
 	'GLOSSIKA-ENCA-F1-EBK.pdf',
 	'GLOSSIKA-ENES-F1-EBK.pdf',
 	'GLOSSIKA-ENES-F2-EBK.pdf',
@@ -20,26 +18,38 @@ ACCEPTED_PDFS = (
 	'GLOSSIKA-ENZSZT-F1-EBK.pdf',
 	'GLOSSIKA-ENZSZT-F2-EBK.pdf',
 	'GLOSSIKA-ENZSZT-F3-EBK.pdf',
+	# PORTUGUESE - BRAZIL
+	'GLOSSIKA-PBESM-F1-EBK.pdf',
+	'GLOSSIKA-PBESM-F2-EBK.pdf',
+	'GLOSSIKA-PBESM-F3-EBK.pdf',
 )
 
 BOOKS = {
-	'ENZSZT': {
-		'types': ['EN', '简', 'PIN', 'IPA', '繁', 'PIN', 'IPA'],
-		'F1': [50, 442],
-		'F2': [50, 501],
-		'F3': [50, 546],
-	},
+	# ENGLISH
 	'ENCA': {
 		'types': ['EN', 'CA', 'IPA'],
 		'F1': [37, 253],
-		'F2': [0, 0],
-		'F3': [0, 0],
+		'F2': [37, 266],
+		'F3': [37, 283],
 	},
 	'ENES': {
 		'types': ['EN', 'ES', 'IPA'],
 		'F1': [31, 266],
 		'F2': [31, 295],
 		'F3': [31, 321],
+	},
+	'ENZSZT': {
+		'types': ['EN', '简', 'PIN', 'IPA', '繁', 'PIN', 'IPA'],
+		'F1': [50, 442],
+		'F2': [50, 501],
+		'F3': [50, 546],
+	},
+	# PORTUGUESE - BRAZIL
+	'PBESM': {
+		'types': ['PB', 'ESM', 'IPA'],
+		'F1': [32, 267],
+		'F2': [32, 296],
+		'F3': [32, 323],
 	},
 }
 
@@ -223,7 +233,8 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 		line_num += 1
 
 		# send back progress report
-		callback.send(line_num / len(lines))
+		if callback:
+			callback.send(line_num / len(lines))
 
 		line = line.strip()
 
@@ -272,7 +283,7 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 
 
 EXPORT_FOLDER = ""
-def split_text(path, file_list, base_folder, unique_folder, callback=None):
+def split_text(path, file_list, base_folder='', unique_folder='', callback=None):
 	global OUTPUT_FOLDER, EXPORT_FOLDER
 	OUTPUT_FOLDER = unique_folder
 	EXPORT_FOLDER = base_folder
@@ -310,8 +321,8 @@ def split_text(path, file_list, base_folder, unique_folder, callback=None):
 
 
 def split():
-	location = os.path.join(PATH, '*.pdf', 'output', '')
-	split_text('', glob.glob(location))
+	location = os.path.join(PATH, '*.pdf')
+	split_text('', glob.glob(location), 'output', '')
 
 
 if __name__ == '__main__':
