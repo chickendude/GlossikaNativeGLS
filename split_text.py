@@ -22,23 +22,29 @@ ACCEPTED_PDFS = (
 	'GLOSSIKA-PBESM-F1-EBK.pdf',
 	'GLOSSIKA-PBESM-F2-EBK.pdf',
 	'GLOSSIKA-PBESM-F3-EBK.pdf',
+	'GLOSSIKA-PBENFR-F1-EBK new.pdf',
+	'GLOSSIKA-PBENFR-F2-EBK new.pdf',
+	'GLOSSIKA-PBENFR-F3-EBK new.pdf',
 )
 
 BOOKS = {
 	# ENGLISH
 	'ENCA': {
+		'languages': ['EN', 'CA'],
 		'types': ['EN', 'CA', 'IPA'],
 		'F1': [37, 253],
 		'F2': [37, 266],
 		'F3': [37, 283],
 	},
 	'ENES': {
+		'languages': ['EN', 'ES'],
 		'types': ['EN', 'ES', 'IPA'],
 		'F1': [31, 266],
 		'F2': [31, 295],
 		'F3': [31, 321],
 	},
 	'ENZSZT': {
+		'languages': ['EN', 'ZS', 'ZT'],
 		'types': ['EN', '简', 'PIN', 'IPA', '繁', 'PIN', 'IPA'],
 		'F1': [50, 442],
 		'F2': [50, 501],
@@ -46,15 +52,26 @@ BOOKS = {
 	},
 	# PORTUGUESE - BRAZIL
 	'PBESM': {
+		'languages': ['PB', 'ESM'],
 		'types': ['PB', 'ESM', 'IPA'],
 		'F1': [32, 267],
 		'F2': [32, 296],
 		'F3': [32, 323],
 	},
+
+	# TRIANGULATIONS
+	'PBENFR': {
+		'languages': ['PB', 'EN', 'FR'],
+		'types': ['PB', 'EN', 'IPA', 'FR', 'IPA'],
+		'F1': [48, 369],
+		'F2': [48, 428],
+		'F3': [48, 473],
+	},
 }
 
 PATH = "texts"
 OUTPUT_FOLDER = ''
+
 
 class Sentence:
 	def __init__(self, index=0, sentence='', translation='', ipa=''):
@@ -65,6 +82,9 @@ class Sentence:
 
 	def __str__(self):
 		return self.sentence
+
+	def __repr__(self):
+		return "{}. sent: '{}' // ipa '{}'".format(self.index, self.sentence, self.ipa)
 
 
 class SentenceRomanized:
@@ -103,12 +123,13 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 		line_num += 1
 
 		# send back progress report
-		callback.send(line_num / len(lines))
+		if callback:
+			callback.send(line_num / len(lines))
 
 		line = line.strip()
 
 		# check if it's a sentence or just junk
-		if language_pair in line or line.isdigit():
+		if language_pair in line or line.isdigit() or 'GMS #' in line:
 			continue
 
 		# get the current type and the next one
@@ -165,7 +186,7 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 	create_romanized_sentence_pack(sentences_zs, 'EN-ZS')
 	create_romanized_sentence_pack(sentences_zt, 'EN-ZT')
 
-	#close generator
+	# close generator
 	if callback:
 		callback.close()
 
@@ -182,6 +203,23 @@ def create_sentence_pack(sentences, language_pair):
 		f.write("index\tsentence\ttranslation\tIPA\tromanization\n".format())
 		for sentence in sentences:
 			f.write("{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.translation, sentence.ipa))
+
+
+def create_sentence_packs(sentences, languages):
+	start = sentences[0][0].index
+	end = sentences[-1][0].index
+	for language in languages:
+		filename = "{}-{}-{}.gsp".format(language, str(start).zfill(4), end)
+		directory = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER, language)
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+		index = languages.index(language)
+		filename = os.path.join(directory, filename)
+		with open(filename, 'w') as f:
+			f.write("index\tsentence\tIPA\tromanization\n".format())
+			for sentence_set in sentences:
+				sentence = sentence_set[index]
+				f.write("{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa))
 
 
 def create_romanized_sentence_pack(sentences, type):
@@ -276,13 +314,90 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 
 	create_sentence_pack(sentences, "{}-{}".format(info['types'][0], info['types'][1]))
 
-	#close generator
+	# close generator
+	if callback:
+		callback.send(1)
+		callback.close()
+
+
+# extract regular triangulation books, languages without any romanization, just sentence and IPA
+def extract_triangulation_sentences(book, info, language_pair, series, callback=None):
+	# set up generator
+	if callback:
+		next(callback)
+
+	if series == 'F1':
+		sentence_num = 0
+	elif series == 'F2':
+		sentence_num = 1000
+	elif series == 'F3':
+		sentence_num = 2000
+	else:
+		sentence_num = 0
+
+	sentences = []
+	sentence_types = info['types']
+	lines = book.split('\n')
+	line_num = 0
+	for line in lines:
+		line_num += 1
+
+		# send back progress report
+		if callback:
+			callback.send(line_num / len(lines))
+
+		line = line.strip()
+
+		# check if it's a sentence or just junk
+		if language_pair in line or line.isdigit() or 'GMS #' in line:
+			continue
+
+		# get the current type and the next one
+		type, next_type = get_sentence_type(sentence_types, line)
+
+		# make sure it's a valid sentence
+		if type == None:
+			continue
+
+		if next_type == None:
+			next_type = language_pair
+
+		if type == info['languages'][0]:
+			sentence_num += 1
+			sentences.append([])
+
+		# if it's the first type, it's a new sentence
+		if type in info['languages']:
+			sentence = Sentence(index=sentence_num)
+			sentences[-1].append(sentence)
+
+		_, phrase = line.split(type + " ")
+
+		# next we check if it's a multi-line sentence
+		if line_num < len(lines) and next_type not in lines[line_num] and not lines[line_num].strip().isdigit():
+			phrase += " " + lines[line_num].strip()
+			if line_num + 1 < len(lines) and next_type not in lines[line_num + 1] and not lines[
+				line_num + 1].strip().isdigit():
+				phrase += " " + lines[line_num + 1].strip()
+		index = sentence_types.index(type)
+		if index > 0:
+			index = (index - 1) % 2
+		if index == 0:
+			sentence.sentence = phrase
+		if index == 1:
+			sentence.ipa = phrase
+
+	create_sentence_packs(sentences, info['languages'])
+
+	# close generator
 	if callback:
 		callback.send(1)
 		callback.close()
 
 
 EXPORT_FOLDER = ""
+
+
 def split_text(path, file_list, base_folder='', unique_folder='', callback=None):
 	global OUTPUT_FOLDER, EXPORT_FOLDER
 	OUTPUT_FOLDER = unique_folder
@@ -316,8 +431,10 @@ def split_text(path, file_list, base_folder='', unique_folder='', callback=None)
 		# extract all sentences
 		if len(book_info['types']) == 3:
 			extract_sentences(book, book_info, language_pair, series, callback)
-		else:
+		elif language_pair == 'ENZSZT':
 			extract_chinese_sentences(book, book_info, language_pair, series, callback)
+		else:
+			extract_triangulation_sentences(book, book_info, language_pair, series, callback)
 
 
 def split():

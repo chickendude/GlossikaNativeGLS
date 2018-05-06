@@ -1,8 +1,6 @@
 from pydub import AudioSegment
-import os, glob
+import os, glob, shutil
 
-
-# import cleanup
 
 # ------------------ classes ------------------
 
@@ -14,9 +12,10 @@ class Segment:
 
 
 class LoadedFile:
-	def __init__(self, filename='', sentence_start=1, lang1='', lang2='', book=''):
+	def __init__(self, filename='', sentence_start=1, langs=[], lang1='', lang2='', book=''):
 		self.filename = filename
 		self.sentence_start = sentence_start
+		self.langs = langs
 		self.lang1 = lang1
 		self.lang2 = lang2
 		self.book = book
@@ -25,16 +24,33 @@ class LoadedFile:
 # ------------------ globals ------------------
 
 ACCEPTED_LANGUAGES_F1 = (
+	'ENCA',
 	'ENES',
 	'ENZS',
+	'PBESM',
+	# TRIANGULATIONS
+	'PBENFR',
 )
-ACCEPTED_LANGUAGES_F2 = (
 
+ACCEPTED_LANGUAGES_F2 = (
+	'ENES',
+	'ENZS',
+	'PBESM',
 )
 
 ACCEPTED_LANGUAGES_F3 = (
-
+	'ENES',
+	'ENZS',
+	'PBESM',
 )
+
+LANGUAGES = {
+	'ENCA': ('EN', 'CA'),
+	'ENES': ('EN', 'ES'),
+	'ENZS': ('EN', 'ZS'),
+	'PBESM': ('PB', 'ESM'),
+	'PBENFR': ('PB', 'EN', 'FR'),
+}
 
 PATH = "files"
 EXPORT_PATH = "output"
@@ -55,11 +71,14 @@ def load_segments(path):
 			start, end, id = line.split("\t")
 			segments.append(Segment(float(start), float(end), int(id) - 1))
 	# update file information
+	filename_parts = filename.split('-')
+	lang = filename_parts[0]
 	LOADED_FILE.filename = filename.rstrip('.mp3')
 	LOADED_FILE.sentence_start = int(filename.strip('.mp3')[-4:])
-	LOADED_FILE.lang1 = filename[:2]
-	LOADED_FILE.lang2 = filename[2:4]
-	LOADED_FILE.book = filename[5:7]
+	LOADED_FILE.langs = LANGUAGES[lang]
+	LOADED_FILE.lang1 = LANGUAGES[lang][0]
+	LOADED_FILE.lang2 = LANGUAGES[lang][1]
+	LOADED_FILE.book = filename_parts[1]
 	return segments, filename
 
 
@@ -73,19 +92,21 @@ def extract_sentences(filepath, segments):
 		offset = LOADED_FILE.sentence_start
 
 		# check which type it is
-		language = LOADED_FILE.lang1 if id % 2 == 0 else LOADED_FILE.lang2
+		langs = LOADED_FILE.langs
+		language = langs[id % len(langs)]
+		# language = LOADED_FILE.lang1 if id % 2 == 0 else LOADED_FILE.lang2
 
-		export_name = "{} - {} - {num:04d}.mp3".format(language, LOADED_FILE.book, num=int(id / 2) + offset)
-		directory = os.path.join(EXPORT_PATH, OUTPUT_FOLDER)
+		export_name = "{} - {} - {num:04d}.mp3".format(language, LOADED_FILE.book, num=int(id / len(langs)) + offset)
+		directory = os.path.join(EXPORT_PATH, OUTPUT_FOLDER, language)
 		if not os.path.exists(directory):
 			os.makedirs(directory)
-		export_path = os.path.join(EXPORT_PATH, OUTPUT_FOLDER, export_name)
+		export_path = os.path.join(directory, export_name)
 		print("Extracting '{}'".format(export_path))
 		segment = track[start:end]
 		segment.export(export_path, codec='mp3')
 
 
-def split_audio(gtl_path, gms_path, language, base_folder, unique_folder, callback=None):
+def split_audio(gtl_path, gms_path, language, book, base_folder, unique_folder, callback=None):
 	global OUTPUT_FOLDER, EXPORT_PATH
 	OUTPUT_FOLDER = unique_folder
 	EXPORT_PATH = base_folder
@@ -93,11 +114,12 @@ def split_audio(gtl_path, gms_path, language, base_folder, unique_folder, callba
 	if callback:
 		next(callback)
 
-	location = os.path.join(gtl_path, language, '*.gtl')
+	location = os.path.join(gtl_path, language, book, '*.gtl')
 	list_files = glob.glob(location)
 	for list_file in list_files:
 		# send progress back
-		callback.send(list_files.index(list_file) / len(list_files))
+		if callback:
+			callback.send(list_files.index(list_file) / len(list_files))
 
 		segments, filename = load_segments(list_file)
 
@@ -110,8 +132,9 @@ def split_audio(gtl_path, gms_path, language, base_folder, unique_folder, callba
 		callback.send(1)
 		callback.close()
 
+
 def split():
-	split_audio(GTL_PATH, PATH, 'ENZS', EXPORT_PATH, '')
+	split_audio(GTL_PATH, PATH, 'PBENFR', 'F3', EXPORT_PATH, '')
 
 
 if __name__ == '__main__':
