@@ -2,13 +2,14 @@ import glob
 import os
 
 PATH = 'sentence_markings'
-LANG_PAIR = 'ENES'
-
+LANG_PAIR = 'ENZS'
+BOOK = 'F3'
 
 def cleanup():
 	os.chdir(PATH)
 	os.chdir(LANG_PAIR)
-	for filename in glob.glob('*.gtl'):
+	os.chdir(BOOK)
+	for filename in glob.glob('*.txt'):
 		print("Checking '{}'".format(filename))
 		contents = ''
 		with open(filename, 'r') as list_file:
@@ -25,7 +26,7 @@ def cleanup():
 			contents = '{}-F{}-GMS-B-{}\n{}'.format(languages.upper(), fluency_num, sentence_start,
 													list_file.read().replace(',', '.'))
 		if contents:
-			with open(filename, 'w') as list_file:
+			with open(new_filename, 'w') as list_file:
 				list_file.write(contents)
 
 

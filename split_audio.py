@@ -134,7 +134,7 @@ def split_audio(gtl_path, gms_path, language, book, base_folder, unique_folder, 
 
 
 def split():
-	split_audio(GTL_PATH, PATH, 'PBENFR', 'F3', EXPORT_PATH, '')
+	split_audio(GTL_PATH, PATH, 'ENZS', 'F2', EXPORT_PATH, '')
 
 
 if __name__ == '__main__':
