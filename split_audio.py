@@ -1,5 +1,5 @@
 from pydub import AudioSegment
-import os, glob, shutil
+import os, glob
 
 
 # ------------------ classes ------------------
