@@ -74,29 +74,18 @@ OUTPUT_FOLDER = ''
 
 
 class Sentence:
-	def __init__(self, index=0, sentence='', translation='', ipa=''):
+	def __init__(self, index=0, sentence='', translation='', ipa='', romanization=''):
 		self.index = index
 		self.sentence = sentence
 		self.translation = translation
 		self.ipa = ipa
+		self.romanization = romanization
 
 	def __str__(self):
 		return self.sentence
 
 	def __repr__(self):
 		return "{}. sent: '{}' // ipa '{}'".format(self.index, self.sentence, self.ipa)
-
-
-class SentenceRomanized:
-	def __init__(self, index=0, sentence='', translation='', romanization='', ipa=''):
-		self.index = index
-		self.sentence = sentence
-		self.translation = translation
-		self.romanization = romanization
-		self.ipa = ipa
-
-	def __str__(self):
-		return self.sentence
 
 
 # extract special combined Mandarin simplified + traditional book
@@ -106,16 +95,15 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 		next(callback)
 
 	if series == 'F1':
-		sentence_num = 1
+		sentence_num = 0
 	elif series == 'F2':
-		sentence_num = 1001
+		sentence_num = 1000
 	elif series == 'F3':
-		sentence_num = 2001
+		sentence_num = 2000
 	else:
-		sentence_num = 1
+		sentence_num = 0
 
-	sentences_zs = []
-	sentences_zt = []
+	sentences = []
 	sentence_types = info['types']
 	lines = book.split('\n')
 	line_num = 0
@@ -142,15 +130,13 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 		if next_type == None:
 			next_type = language_pair
 
-		# if it's the first type, it's a new sentence
-		if type == sentence_types[0]:
-			# simplified sentence
-			sentence_zs = SentenceRomanized(index=sentence_num)
-			sentences_zs.append(sentence_zs)
-			# traditional sentence
-			sentence_zt = SentenceRomanized(index=sentence_num)
-			sentences_zt.append(sentence_zt)
+		if type == info['languages'][0]:
 			sentence_num += 1
+			sentences.append([])
+
+		if type in ('EN', '简', '繁',):
+			sentence = Sentence(index=sentence_num)
+			sentences[-1].append(sentence)
 
 		# remove type prefix
 		_, phrase = line.split(type + " ")
@@ -165,26 +151,14 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 					if next_type not in line2 and not line2.isdigit() and language_pair not in line2:
 						phrase += " " + lines[line_num + 1].strip()
 		index = sentence_types.index(type)
-		if index == 0:
-			sentence_zs.sentence = phrase
-			sentence_zt.sentence = phrase
-		if index == 1:
-			sentence_zs.translation = phrase
-		if index == 2:
-			if sentence_zs.romanization == '':
-				sentence_zs.romanization = phrase
-			else:
-				sentence_zt.romanization = phrase
-		if index == 3:
-			if sentence_zs.ipa == '':
-				sentence_zs.ipa = phrase
-			else:
-				sentence_zt.ipa = phrase
-		if index == 4:
-			sentence_zt.translation = phrase
+		if index == 0 or index == 1 or index == 4:
+			sentence.sentence = phrase
+		if index == 2 or index == 5:
+			sentence.romanization = phrase
+		if index == 3 or index == 6:
+			sentence.ipa = phrase
 
-	create_romanized_sentence_pack(sentences_zs, 'EN-ZS')
-	create_romanized_sentence_pack(sentences_zt, 'EN-ZT')
+	create_sentence_packs(sentences, info['languages'])
 
 	# close generator
 	if callback:
@@ -219,22 +193,11 @@ def create_sentence_packs(sentences, languages):
 			f.write("index\tsentence\tIPA\tromanization\n".format())
 			for sentence_set in sentences:
 				sentence = sentence_set[index]
-				f.write("{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa))
-
-
-def create_romanized_sentence_pack(sentences, type):
-	start = sentences[0].index
-	end = sentences[-1].index
-	filename = "{}-{}-{}.gsp".format(type, str(start).zfill(4), end)
-	directory = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER)
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-	filename = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER, filename)
-	with open(filename, 'w') as f:
-		f.write("index\tsentence\ttranslation\tIPA\tromanization\n".format())
-		for sentence in sentences:
-			f.write("{}\t{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.translation, sentence.ipa,
-												  sentence.romanization))
+				if sentence.romanization:
+					f.write("{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa,
+													  sentence.romanization))
+				else:
+					f.write("{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa))
 
 
 def get_sentence_type(types, line):

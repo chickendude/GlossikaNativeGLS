@@ -38,7 +38,7 @@ def create_gls(languages: tuple, output_folder: str, folder_to_zip: str) -> list
 
 
 def split():
-	create_gls(('PB','EN','FR'), 'output', 'output')
+	create_gls(('EN','ZS'), 'output', 'output')
 
 
 if __name__ == '__main__':
