@@ -8,9 +8,15 @@ from pydub.silence import detect_nonsilent
 LANGUAGES = {
 	'ENCA': ('EN', 'CA'),
 	'ENDE': ('EN', 'DE'),
+	'ENEL': ('EN', 'EL'),
 	'ENES': ('EN', 'ES'),
 	'ENESM': ('EN', 'ESM'),
+	'ENRU': ('EN', 'RU'),
+	'ENTGL': ('EN', 'TGL'),
+	'ENTR': ('EN', 'TR'),
+	'ENUKR': ('EN', 'UKR'),
 	'ENZS': ('EN', 'ZS'),
+	'ENZT': ('EN', 'ZT'),
 	'PBESM': ('PB', 'ESM'),
 	'PBENFR': ('PB', 'EN', 'FR'),
 }
@@ -33,7 +39,7 @@ def extract_sentences(file_info: FileInfo):
 	track = AudioSegment.from_mp3(file_info.filename)
 	chunks = split_on_silence(
 		track,
-		min_silence_len=1500,
+		min_silence_len=1800,
 		silence_thresh=-60,
 		keep_silence=25
 	)
@@ -48,7 +54,7 @@ def extract_sentences(file_info: FileInfo):
 		# skip intro + target language name
 		chunks = chunks[2:-2]
 
-	if not len(chunks) % 50 == 0:
+	if not len(chunks) % 50 == 0 or len(chunks) == 0:
 		print("** ERR: INVALID NUMBER OF CHUNKS ({}), SKIPPING **".format(len(chunks)))
 		return
 
@@ -66,7 +72,7 @@ def extract_sentences(file_info: FileInfo):
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 		export_path = os.path.join(directory, filename)
-		print("Extracting '{}'".format(export_path))
+		# print("Extracting '{}'".format(export_path))
 		sentence.export(export_path, codec='mp3')
 
 
@@ -81,6 +87,8 @@ def get_file_info(mp3_file) -> FileInfo:
 def main():
 	path = os.path.join('files', '*.mp3')
 	mp3_files = glob.glob(path)
+	mp3_files.sort()
+
 	for mp3_file in mp3_files:
 		file_info = get_file_info(mp3_file)
 		extract_sentences(file_info)
