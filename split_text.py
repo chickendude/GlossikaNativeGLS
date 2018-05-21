@@ -165,20 +165,6 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 		callback.close()
 
 
-def create_sentence_pack(sentences, language_pair):
-	start = sentences[0].index
-	end = sentences[-1].index
-	filename = "{}-{}-{}.gsp".format(language_pair, str(start).zfill(4), end)
-	directory = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER)
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-	filename = os.path.join(directory, filename)
-	with open(filename, 'w') as f:
-		f.write("index\tsentence\ttranslation\tIPA\tromanization\n".format())
-		for sentence in sentences:
-			f.write("{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.translation, sentence.ipa))
-
-
 def create_sentence_packs(sentences, languages):
 	start = sentences[0][0].index
 	end = sentences[-1][0].index
@@ -211,80 +197,8 @@ def get_sentence_type(types, line):
 	return None, None
 
 
-# extract regular books, languages without any romanization, just sentence, translation, and IPA
-def extract_sentences(book, info, language_pair, series, callback=None):
-	# set up generator
-	if callback:
-		next(callback)
-
-	if series == 'F1':
-		sentence_num = 1
-	elif series == 'F2':
-		sentence_num = 1001
-	elif series == 'F3':
-		sentence_num = 2001
-	else:
-		sentence_num = 1
-
-	sentences = []
-	sentence_types = info['types']
-	lines = book.split('\n')
-	line_num = 0
-	for line in lines:
-		line_num += 1
-
-		# send back progress report
-		if callback:
-			callback.send(line_num / len(lines))
-
-		line = line.strip()
-
-		# check if it's a sentence or just junk
-		if language_pair in line or line.isdigit():
-			continue
-
-		# get the current type and the next one
-		type, next_type = get_sentence_type(sentence_types, line)
-
-		# make sure it's a valid sentence
-		if type == None:
-			continue
-
-		if next_type == None:
-			next_type = language_pair
-
-		# if it's the first type, it's a new sentence
-		if type == sentence_types[0]:
-			sentence = Sentence(index=sentence_num)
-			sentences.append(sentence)
-			sentence_num += 1
-
-		_, phrase = line.split(type + " ")
-
-		# next we check if it's a multi-line sentence
-		if line_num < len(lines) and next_type not in lines[line_num] and not lines[line_num].strip().isdigit():
-			phrase += " " + lines[line_num].strip()
-			if line_num + 1 < len(lines) and next_type not in lines[line_num + 1] and not lines[
-				line_num + 1].strip().isdigit():
-				phrase += " " + lines[line_num + 1].strip()
-		index = sentence_types.index(type)
-		if index == 0:
-			sentence.sentence = phrase
-		if index == 1:
-			sentence.translation = phrase
-		if index == 2:
-			sentence.ipa = phrase
-
-	create_sentence_pack(sentences, "{}-{}".format(info['types'][0], info['types'][1]))
-
-	# close generator
-	if callback:
-		callback.send(1)
-		callback.close()
-
-
 # extract regular triangulation books, languages without any romanization, just sentence and IPA
-def extract_triangulation_sentences(book, info, language_pair, series, callback=None):
+def extract_sentences(book, info, language_pair, series, callback=None):
 	# set up generator
 	if callback:
 		next(callback)
@@ -392,12 +306,10 @@ def split_text(path, file_list, base_folder='', unique_folder='', callback=None)
 			book += pdf[i]
 
 		# extract all sentences
-		if len(book_info['types']) == 3:
-			extract_sentences(book, book_info, language_pair, series, callback)
-		elif language_pair == 'ENZSZT':
+		if language_pair == 'ENZSZT':
 			extract_chinese_sentences(book, book_info, language_pair, series, callback)
 		else:
-			extract_triangulation_sentences(book, book_info, language_pair, series, callback)
+			extract_sentences(book, book_info, language_pair, series, callback)
 
 
 def split():
