@@ -9,24 +9,6 @@ import pdftotext
 # may need to have a separate function written for them.
 #
 
-ACCEPTED_PDFS = (
-	# ENGLISH
-	'GLOSSIKA-ENCA-F1-EBK.pdf',
-	'GLOSSIKA-ENES-F1-EBK.pdf',
-	'GLOSSIKA-ENES-F2-EBK.pdf',
-	'GLOSSIKA-ENES-F3-EBK.pdf',
-	'GLOSSIKA-ENZSZT-F1-EBK.pdf',
-	'GLOSSIKA-ENZSZT-F2-EBK.pdf',
-	'GLOSSIKA-ENZSZT-F3-EBK.pdf',
-	# PORTUGUESE - BRAZIL
-	'GLOSSIKA-PBESM-F1-EBK.pdf',
-	'GLOSSIKA-PBESM-F2-EBK.pdf',
-	'GLOSSIKA-PBESM-F3-EBK.pdf',
-	'GLOSSIKA-PBENFR-F1-EBK new.pdf',
-	'GLOSSIKA-PBENFR-F2-EBK new.pdf',
-	'GLOSSIKA-PBENFR-F3-EBK new.pdf',
-)
-
 BOOKS = {
 	# ENGLISH
 	'ENCA': {
@@ -36,6 +18,20 @@ BOOKS = {
 		'F2': [37, 266],
 		'F3': [37, 283],
 	},
+	'ENDE': {
+		'languages': ['EN', 'DE'],
+		'types': ['EN', 'DE', 'IPA'],
+		'F1': [37, 270],
+		'F2': [37, 297],
+		'F3': [37, 330],
+	},
+	'ENEL': {
+		'languages': ['EN', 'EL'],
+		'types': ['EN', 'EL', 'ROM', 'IPA'],
+		'F1': [29, 309],
+		'F2': [29, 346],
+		'F3': [29, 379],
+	},
 	'ENES': {
 		'languages': ['EN', 'ES'],
 		'types': ['EN', 'ES', 'IPA'],
@@ -43,6 +39,55 @@ BOOKS = {
 		'F2': [31, 295],
 		'F3': [31, 321],
 	},
+	'ENESM': {
+		'languages': ['EN', 'ESM'],
+		'types': ['EN', 'ESM', 'IPA'],
+		'F1': [29, 262],
+		'F2': [29, 288],
+		'F3': [29, 313],
+	},
+	'ENNL': {
+		'languages': ['EN', 'NL'],
+		'types': ['EN', 'NL', 'IPA'],
+		'F1': [32, 266],
+		'F2': [32, 285],
+		'F3': [32, 315],
+	},
+	'ENRU': {
+		'languages': ['EN', 'RU'],
+		'types': ['EN', 'RU', 'IPA', 'ROM'],
+		'F1': [36, 314],
+		'F2': [36, 358],
+		'F3': [36, 400],
+	},
+	'ENTGL': {
+		'languages': ['EN', 'TGL'],
+		'types': ['EN', 'TGL'],
+		'F1': [29, 219],
+		'F2': [29, 235],
+		'F3': [29, 252],
+	},
+	'ENTH': {
+		'languages': ['EN', 'TH'],
+		'types': ['EN', 'TH', 'IPA'],
+		'F1': [34, 249],
+		'F2': [34, 256],
+		'F3': [34, 285],
+	},
+	'ENTR': {
+		'languages': ['EN', 'TR'],
+		'types': ['EN', 'TR', 'IPA'],
+		'F1': [29, 256],
+		'F2': [29, 280],
+		'F3': [29, 304],
+	},
+	# 'ENUKR': {
+	# 	'languages': ['EN', 'UKR'],
+	# 	'types': ['EN', 'UKR', 'IPA'],
+	# 	'F1': [29, 262],
+	# 	'F2': [29, 293],
+	# 	'F3': [29, 318],
+	# },
 	'ENZSZT': {
 		'languages': ['EN', 'ZS', 'ZT'],
 		'types': ['EN', '简', 'PIN', 'IPA', '繁', 'PIN', 'IPA'],
@@ -154,23 +199,25 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 		if index == 0 or index == 1 or index == 4:
 			sentence.sentence = phrase
 		if index == 2 or index == 5:
+			if not sentences[-1][0].romanization:
+				sentences[-1][0].romanization = phrase
 			sentence.romanization = phrase
 		if index == 3 or index == 6:
 			sentence.ipa = phrase
 
-	create_sentence_packs(sentences, info['languages'])
+	create_sentence_packs(sentences, series, info['languages'])
 
 	# close generator
 	if callback:
 		callback.close()
 
 
-def create_sentence_packs(sentences, languages):
+def create_sentence_packs(sentences, series, languages):
 	start = sentences[0][0].index
 	end = sentences[-1][0].index
 	for language in languages:
 		filename = "{}-{}-{}.gsp".format(language, str(start).zfill(4), end)
-		directory = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER, language)
+		directory = os.path.join(EXPORT_FOLDER, OUTPUT_FOLDER, language, series)
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 		index = languages.index(language)
@@ -180,15 +227,15 @@ def create_sentence_packs(sentences, languages):
 			for sentence_set in sentences:
 				sentence = sentence_set[index]
 				if sentence.romanization:
-					f.write("{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa,
-													  sentence.romanization))
+					f.write("{}\t{}\t{}\t{}\n".format(sentence.index, sentence.sentence.strip(), sentence.ipa.strip(),
+													  sentence.romanization.strip()))
 				else:
-					f.write("{}\t{}\t{}\n".format(sentence.index, sentence.sentence, sentence.ipa))
+					f.write("{}\t{}\t{}\n".format(sentence.index, sentence.sentence.strip(), sentence.ipa.strip()))
 
 
 def get_sentence_type(types, line):
 	for type in types:
-		if type + " " in line:
+		if line.strip().startswith(type + " "):
 			i = types.index(type)
 			if i + 1 == len(types):
 				return type, None
@@ -256,15 +303,18 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 			if line_num + 1 < len(lines) and next_type not in lines[line_num + 1] and not lines[
 				line_num + 1].strip().isdigit():
 				phrase += " " + lines[line_num + 1].strip()
-		index = sentence_types.index(type)
-		if index > 0:
-			index = (index - 1) % 2
-		if index == 0:
+		try:
+			index = sentence_types.index(type)
+		except IndexError:
+			print("INDEX ERROR: " + type + "/" + sentence.index)
+		if index == 0 or index == 1:
 			sentence.sentence = phrase
-		if index == 1:
+		if type == 'IPA':
 			sentence.ipa = phrase
+		if type == 'ROM':
+			sentence.romanization = phrase
 
-	create_sentence_packs(sentences, info['languages'])
+	create_sentence_packs(sentences, series, info['languages'])
 
 	# close generator
 	if callback:

@@ -11,8 +11,10 @@ LANGUAGES = {
 	'ENEL': ('EN', 'EL'),
 	'ENES': ('EN', 'ES'),
 	'ENESM': ('EN', 'ESM'),
+	'ENNL': ('EN', 'NL'),
 	'ENRU': ('EN', 'RU'),
 	'ENTGL': ('EN', 'TGL'),
+	'ENTH': ('EN', 'TH'),
 	'ENTR': ('EN', 'TR'),
 	'ENUKR': ('EN', 'UKR'),
 	'ENZS': ('EN', 'ZS'),
@@ -85,7 +87,7 @@ def get_file_info(mp3_file) -> FileInfo:
 
 
 def main():
-	path = os.path.join('files', '*.mp3')
+	path = os.path.join('th', '*.mp3')
 	mp3_files = glob.glob(path)
 	mp3_files.sort()
 
