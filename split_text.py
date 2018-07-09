@@ -27,6 +27,10 @@ ACCEPTED_PDFS = (
 	'GLOSSIKA-PBENFR-F1-EBK new.pdf',
 	'GLOSSIKA-PBENFR-F2-EBK new.pdf',
 	'GLOSSIKA-PBENFR-F3-EBK new.pdf',
+	# Italian
+	'GLOSSIKA-DEIT-F1-EBK.pdf',
+	'GLOSSIKA-DEIT-F2-EBK.pdf',
+	'GLOSSIKA-DEIT-F3-EBK.pdf',
 )
 
 BOOKS = {
@@ -68,6 +72,15 @@ BOOKS = {
 		'F1': [48, 369],
 		'F2': [48, 428],
 		'F3': [48, 473],
+	},
+
+	# Italian
+	'DEIT': {
+		'languages': ['EN', 'CA'],
+		'types': ['DE', 'IT', 'IPA'],
+		'F1': [33, 263],
+		'F2': [33, 295],
+		'F3': [33, 329],
 	},
 }
 
