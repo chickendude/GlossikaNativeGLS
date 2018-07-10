@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# expected directories for our project
+output/
+texts/
+files/
