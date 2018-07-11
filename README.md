@@ -13,8 +13,7 @@ This splits the audio from the GMS files using timings taken from Audacity + a o
 of the audio file.
 
 # create_gls.py
-This packages everything together into a zip file and renames it as a .gls file that can be sent to Natibo
-(https://github.com/chickendude/Natibo).
+This packages everything together into a zip file and renames it as a .gls file that can be sent to [Natibo](https://github.com/chickendude/Natibo).
 
 # cleanup.py
 Some things to help clean up the timing files that Audacity spits out.
