@@ -3,7 +3,8 @@ import os
 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
-from pydub.silence import detect_nonsilent
+
+PATH = "files"
 
 LANGUAGES = {
 	'ENCA': ('EN', 'CA'),
@@ -87,7 +88,7 @@ def get_file_info(mp3_file) -> FileInfo:
 
 
 def main():
-	path = os.path.join('th', '*.mp3')
+	path = os.path.join(PATH, '*.mp3')
 	mp3_files = glob.glob(path)
 	mp3_files.sort()
 
