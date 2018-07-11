@@ -23,27 +23,6 @@ class LoadedFile:
 
 # ------------------ globals ------------------
 
-ACCEPTED_LANGUAGES_F1 = (
-	'ENCA',
-	'ENES',
-	'ENZS',
-	'PBESM',
-	# TRIANGULATIONS
-	'PBENFR',
-)
-
-ACCEPTED_LANGUAGES_F2 = (
-	'ENES',
-	'ENZS',
-	'PBESM',
-)
-
-ACCEPTED_LANGUAGES_F3 = (
-	'ENES',
-	'ENZS',
-	'PBESM',
-)
-
 LANGUAGES = {
 	'ENCA': ('EN', 'CA'),
 	'ENES': ('EN', 'ES'),
