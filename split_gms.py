@@ -49,7 +49,7 @@ def extract_sentences(file_info: FileInfo):
 
 	languages = LANGUAGES[file_info.languages]
 
-	# if it's GMS C, it'll have more than 100 sentences (100 + the intro and outro)
+	# if it's GMS B, it'll have more than 100 sentences (100 + the intro and outro)
 	if len(chunks) > 100:
 		# skip intro + all language names
 		chunks = chunks[len(languages):-2]
