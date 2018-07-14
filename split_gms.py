@@ -50,18 +50,14 @@ def extract_sentences(file_info: FileInfo):
 
 	languages = LANGUAGES[file_info.languages]
 
-	# if it's GMS B, it'll have more than 100 sentences (100 + the intro and outro)
-	if len(chunks) > 100:
-		if "DE" in languages and "IT" in languages:
-			# DEIT has one more to skip
-			chunks = chunks[len(languages)+1:-2]
-		else:
-			# skip intro + all language names
-			chunks = chunks[len(languages):-2]
+	# if it's GMS B, it'll have the intro, outro, and all language names
+	if "GMS-B" in file_info.filename:
+		# +1 for the intro and +1 for each language
+		chunks = chunks[len(languages)+1:-2]
 	else:
-		# skip intro + target language name
-		chunks = chunks[2:-2]
-
+		# skip intro + target language names. The base language won't be counted, so len(languages) covers the intro
+		# in addition to he target languages
+		chunks = chunks[len(languages):-2]
 	if not len(chunks) % 50 == 0 or len(chunks) == 0:
 		print("** ERR: INVALID NUMBER OF CHUNKS ({}), SKIPPING **".format(len(chunks)))
 		return
