@@ -22,6 +22,7 @@ LANGUAGES = {
 	'ENZT': ('EN', 'ZT'),
 	'PBESM': ('PB', 'ESM'),
 	'PBENFR': ('PB', 'EN', 'FR'),
+	'DEIT': ('DE', 'IT'),
 }
 
 
@@ -51,8 +52,12 @@ def extract_sentences(file_info: FileInfo):
 
 	# if it's GMS C, it'll have more than 100 sentences (100 + the intro and outro)
 	if len(chunks) > 100:
-		# skip intro + all language names
-		chunks = chunks[len(languages):-2]
+		if "DE" in languages and "IT" in languages:
+			# DEIT has one more to skip
+			chunks = chunks[len(languages)+1:-2]
+		else:
+			# skip intro + all language names
+			chunks = chunks[len(languages):-2]
 	else:
 		# skip intro + target language name
 		chunks = chunks[2:-2]
