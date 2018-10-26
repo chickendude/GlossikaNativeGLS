@@ -1,4 +1,4 @@
-import os, glob, shutil
+import os, shutil, argparse
 
 
 def create_gls(languages: tuple, books: tuple, output_folder: str, folder_to_zip: str) -> list:
@@ -26,8 +26,14 @@ def create_gls(languages: tuple, books: tuple, output_folder: str, folder_to_zip
 
 
 def split():
-	create_gls(('EN', 'EL',), ('F1', 'F2', 'F3'), 'output', 'output')
+	create_gls(('DE','IT'), ('F1',), 'output', 'output')
+
+
+def load_argparse():
+	parser = argparse.ArgumentParser(description="Package the output files from split_text.py and split_gms.py into a .gls file.")
+	parser.add_argument("")
 
 
 if __name__ == '__main__':
+	# load_argparse()
 	split()

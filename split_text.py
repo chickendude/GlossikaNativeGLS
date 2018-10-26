@@ -83,6 +83,13 @@ BOOKS = {
 		'F2': [29, 280],
 		'F3': [29, 304],
 	},
+	'ENYUE': {
+		'languages': ['EN', 'YUE'],
+		'types': ['EN', '粵', 'GUP', 'JYUT', 'YALE', 'IPA'],
+		'F1': [47, 311],
+		'F2': [47, 331],
+		'F3': [47, 354],
+	},
 	# 'ENUKR': {
 	# 	'languages': ['EN', 'UKR'],
 	# 	'types': ['EN', 'UKR', 'IPA'],
@@ -119,9 +126,9 @@ BOOKS = {
 	'DEIT': {
 		'languages': ['DE', 'IT'],
 		'types': ['DE', 'IT', 'IPA'],
-		'F1': [33, 263],
-		'F2': [33, 295],
-		'F3': [33, 329],
+		'F1': [32, 263],
+		'F2': [32, 295],
+		'F3': [32, 329],
 	},
 }
 
@@ -302,7 +309,7 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 			sentences.append([])
 
 		# if it's the first type, it's a new sentence
-		if type in info['languages']:
+		if type in info['languages'] or type in ('粵',):
 			sentence = Sentence(index=sentence_num)
 			sentences[-1].append(sentence)
 
@@ -318,11 +325,11 @@ def extract_sentences(book, info, language_pair, series, callback=None):
 			index = sentence_types.index(type)
 		except IndexError:
 			print("INDEX ERROR: " + type + "/" + sentence.index)
-		if index == 0 or index == 1:
+		if index == 0 or index == 1 or type in ('粤',):
 			sentence.sentence = phrase
 		if type == 'IPA':
 			sentence.ipa = phrase
-		if type == 'ROM':
+		if type == 'ROM' or type == 'GUP':
 			sentence.romanization = phrase
 
 	create_sentence_packs(sentences, series, info['languages'])
@@ -353,7 +360,7 @@ def split_text(path, file_list, base_folder='', unique_folder='', callback=None)
 		with open(filename, "rb") as f:
 			pdf = pdftotext.PDF(f)
 
-		if language_pair not in pdf[10]:
+		if language_pair not in pdf[48]:
 			print("PDF name doesn't seem to match the PDF contents.")
 			continue
 

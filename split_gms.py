@@ -18,6 +18,7 @@ LANGUAGES = {
 	'ENTH': ('EN', 'TH'),
 	'ENTR': ('EN', 'TR'),
 	'ENUKR': ('EN', 'UKR'),
+	'ENYUE': ('EN', 'YUE'),
 	'ENZS': ('EN', 'ZS'),
 	'ENZT': ('EN', 'ZT'),
 	'PBESM': ('PB', 'ESM'),
