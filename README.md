@@ -24,8 +24,8 @@ This packages everything together into a zip file and renames it as a .gls file 
 Some things to help clean up the timing files that Audacity spits out.
 
 # Usage
-You will need to create a `texts`, `files` and `output` directory. Put all your PDFs `texts`, GMS-B files (for example) into `files`. Run `split_text.py` followed by `split_gms.py`.
-The result will be in the `output` directory.
+You will need to create a `texts`, `files` and `output` directory. Put all your PDFs `texts`, GMS-B files (for example) into `files`. Run `split_text.py` followed by `split_gms.py` and finally `create_gls.py`.
+The results will be in the `output` directory.
 
 There are various ways of doing this.
 
@@ -46,6 +46,9 @@ Checking 'texts/GLOSSIKA-ENES-F3-EBK.pdf'
 
 python3 ./split_gms.py   
 Analyzing 'files/ENES-F1-GMS-B-0001.mp3'
+
+python3 ./create_gls.py
+
 ```
 
 # License
