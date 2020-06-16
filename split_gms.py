@@ -62,7 +62,7 @@ def extract_sentences(file_info: FileInfo):
 		chunks = chunks[len(languages):-2]
 	if not len(chunks) % 50 == 0 or len(chunks) == 0:
 		print("** ERR: INVALID NUMBER OF CHUNKS ({}), SKIPPING **".format(len(chunks)))
-		return
+		# return
 
 	for i, sentence in enumerate(chunks):
 		if len(chunks) > 50:
@@ -74,7 +74,7 @@ def extract_sentences(file_info: FileInfo):
 
 		filename = "{} - {} - {num:04d}.mp3".format(language, file_info.book,
 													num=num + file_info.first_sentence)
-		directory = os.path.join('output', language, file_info.book)
+		directory = os.path.join('output', language, file_info.book, '_test')
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 		export_path = os.path.join(directory, filename)
