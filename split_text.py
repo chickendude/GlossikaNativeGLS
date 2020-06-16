@@ -13,6 +13,15 @@ import pdftotext
 
 BOOKS = {
 	# ENGLISH
+	'ENARARE': {
+		'languages': ['EN', 'AR', 'ARE'],
+		'types': ['EN', 'AR', 'ROM', 'IPA', 'ARE', 'ROM', 'IPA'],
+		'sentences': ['EN', 'AR', 'ARE'],
+		'romanization': 'ROM',
+		'F1': [45, 472],
+		'F2': [45, 533],
+		'F3': [45, 589],
+	},
 	'ENCA': {
 		'languages': ['EN', 'CA'],
 		'types': ['EN', 'CA', 'IPA'],
@@ -100,6 +109,8 @@ BOOKS = {
 	'ENZSZT': {
 		'languages': ['EN', 'ZS', 'ZT'],
 		'types': ['EN', '简', 'PIN', 'IPA', '繁', 'PIN', 'IPA'],
+		'sentences': ['EN', '简', '繁'],
+		'romanization': 'PIN',
 		'F1': [50, 442],
 		'F2': [50, 501],
 		'F3': [50, 546],
@@ -152,7 +163,7 @@ class Sentence:
 
 
 # extract special combined Mandarin simplified + traditional book
-def extract_chinese_sentences(book, info, language_pair, series, callback=None):
+def extract_multi_sentences(book, info, language_pair, series, callback=None):
 	# set up generator
 	if callback:
 		next(callback)
@@ -168,7 +179,7 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 
 	sentences = []
 	sentence_types = info['types']
-	lines = book.split('\n')
+	lines = book.replace('\r\n', '\n').split('\n')
 	line_num = 0
 	for line in lines:
 		line_num += 1
@@ -184,10 +195,10 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 			continue
 
 		# get the current type and the next one
-		type, next_type = get_sentence_type(sentence_types, line)
+		type, next_type, rtl = get_sentence_type(sentence_types, line)
 
 		# make sure it's a valid sentence
-		if type == None:
+		if not type:
 			continue
 
 		if next_type == None:
@@ -197,13 +208,15 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 			sentence_num += 1
 			sentences.append([])
 
-		if type in ('EN', '简', '繁',):
+		if type in info['sentences']:
 			sentence = Sentence(index=sentence_num)
 			sentences[-1].append(sentence)
 
 		# remove type prefix
-		_, phrase = line.split(type + " ")
-
+		if rtl:
+			phrase, _ = line.split(" " + type)
+		else:
+			_, phrase = line.split(type + " ")
 		# next we check if it's a multi-line sentence
 		if line_num < len(lines):
 			line1 = lines[line_num].strip()
@@ -215,13 +228,13 @@ def extract_chinese_sentences(book, info, language_pair, series, callback=None):
 						phrase += " " + lines[line_num + 1].strip()
 		index = sentence_types.index(type)
 		if index == 0 or index == 1 or index == 4:
-			sentence.sentence = phrase
+			sentence.sentence = phrase.strip()
 		if index == 2 or index == 5:
 			if not sentences[-1][0].romanization:
-				sentences[-1][0].romanization = phrase
-			sentence.romanization = phrase
+				sentences[-1][0].romanization = phrase.strip()
+			sentence.romanization = phrase.strip()
 		if index == 3 or index == 6:
-			sentence.ipa = phrase
+			sentence.ipa = phrase.strip()
 
 	create_sentence_packs(sentences, series, info['languages'])
 
@@ -240,7 +253,7 @@ def create_sentence_packs(sentences, series, languages):
 			os.makedirs(directory)
 		index = languages.index(language)
 		filename = os.path.join(directory, filename)
-		with open(filename, 'w') as f:
+		with open(filename, 'w', encoding='utf-8') as f:
 			f.write("index\tsentence\tIPA\tromanization\n".format())
 			for sentence_set in sentences:
 				sentence = sentence_set[index]
@@ -254,12 +267,17 @@ def create_sentence_packs(sentences, series, languages):
 def get_sentence_type(types, line):
 	for type in types:
 		if line.strip().startswith(type + " "):
-			i = types.index(type)
-			if i + 1 == len(types):
-				return type, None
-			else:
-				return type, types[i + 1]
-	return None, None
+			rtl = False
+		elif line.strip().endswith(type):
+			rtl = True
+		else:
+			continue
+		i = types.index(type)
+		if i + 1 == len(types):
+			return type, None, rtl
+		else:
+			return type, types[i + 1], rtl
+	return None, None, False
 
 
 # extract regular triangulation books, languages without any romanization, just sentence and IPA
@@ -372,10 +390,13 @@ def split_text(path, file_list, base_folder='', unique_folder='', callback=None)
 		book = ""
 		for i in range(start, end):
 			book += pdf[i]
+		book = book.replace('\r\n', '\n')
+		while '\n\n' in book:
+			book = book.replace('\n\n', '\n')
 
 		# extract all sentences
-		if language_pair == 'ENZSZT':
-			extract_chinese_sentences(book, book_info, language_pair, series, callback)
+		if 'sentences' in book_info:
+			extract_multi_sentences(book, book_info, language_pair, series, callback)
 		else:
 			extract_sentences(book, book_info, language_pair, series, callback)
 
