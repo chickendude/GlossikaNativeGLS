@@ -7,6 +7,7 @@ from pydub.silence import split_on_silence
 PATH = "files"
 
 LANGUAGES = {
+	'ENARARE': ('EN', 'AR', 'ARE'),
 	'ENCA': ('EN', 'CA'),
 	'ENDE': ('EN', 'DE'),
 	'ENEL': ('EN', 'EL'),
@@ -83,7 +84,7 @@ def extract_sentences(file_info: FileInfo):
 
 def get_file_info(mp3_file) -> FileInfo:
 	parts = mp3_file.split('-')
-	languages = parts[0].split('/')[-1]
+	languages = os.path.split(parts[0])[-1]
 	book = parts[1]
 	sentence_num = int(parts[-1].rstrip('.mp3'))
 	return FileInfo(filename=mp3_file, book=book, first_sentence=sentence_num, languages=languages)
